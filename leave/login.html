@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>登录 · 请假系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- Le styles -->
+    <link href="css/slide-unlock.css" rel="stylesheet">
+	<link href="css/bootstrap-login.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        background-color: #f5f5f5;
+		-webkit-touch-callout: none;  
+		-webkit-user-select: none;  
+		-khtml-user-select: none;  
+		-moz-user-select: none;  
+		-ms-user-select: none;  
+		user-select: none;  
+      }
+
+      .form-signin {
+        max-width: 300px;
+        padding: 19px 29px 29px;
+        margin: 0 auto 20px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        -webkit-border-radius: 5px;
+           -moz-border-radius: 5px;
+                border-radius: 5px;
+        -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+           -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+                box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      }
+      .form-signin .form-signin-heading,
+      .form-signin .checkbox {
+        margin-bottom: 10px;
+      }
+      .form-signin input[type="text"],
+      .form-signin input[type="password"] {
+        font-size: 16px;
+        height: auto;
+        margin-bottom: 15px;
+        padding: 7px 9px;
+      }
+
+    </style>
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../assets/js/html5shiv.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <link rel="icon" href="images/logo.ico">
+  </head>
+
+  <body>
+
+    <div class="container" style="position:relative; top:10px;">
+      <form class="form-signin">
+        <h3 class="form-signin-heading">请假系统</h3>
+        <input class="input-block-level" name="username" id="username" placeholder="工号" type="text">
+        <input class="input-block-level" name="password" id="password" placeholder="密码" type="password">
+        <label class="checkbox">
+			<input id="ck_rmbUser" type="checkbox" value='checkbox'> 记住密码
+			<span style="position:relative;left:10px" class="label label-warning" id="errormsg"></span>
+        </label>
+		<div id="slider">
+			<div id="slider_bg"></div>
+			<span id="label">>></span>
+			<span id="labelTip">拖动滑块登录</span>
+		</div>
+	  </form>
+
+    </div> <!-- /container -->
+	
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/jquery.slide-unlock.js"></script>
+    <script src="js/bootstrap-transition.js"></script>
+    <script src="js/bootstrap-alert.js"></script>
+    <script src="js/bootstrap-modal.js"></script>
+    <script src="js/bootstrap-dropdown.js"></script>
+    <script src="js/bootstrap-scrollspy.js"></script>
+    <script src="js/bootstrap-tab.js"></script>
+    <script src="js/bootstrap-tooltip.js"></script>
+    <script src="js/bootstrap-popover.js"></script>
+    <script src="js/bootstrap-button.js"></script>
+    <script src="js/bootstrap-collapse.js"></script>
+    <script src="js/bootstrap-carousel.js"></script>
+    <script src="js/bootstrap-typeahead.js"></script>
+
+	<script>
+	
+	if ($.cookie("rmbUser") =="true") {
+		$("#ck_rmbUser").attr("checked", true);
+		$("#username").val($.cookie("username"));
+		$("#password").val($.cookie("password"));
+	}
+	
+	$(document).ready(function() {
+		$(function () {
+			var baseURL = "http://192.168.43.194/qj/index.php/home/";
+			var slider = new SliderUnlock("#slider",{
+					originTip:"拖动滑块登录",
+					successLabelTip : "正在登录..."
+				},function(){
+					$.cookie('id', '', {expires:-1});
+					if (checkUsername() && checkPassword()){
+						$.ajax({
+							type: 'POST',
+							url: baseURL + 'index/Login',
+							data: {"employee_id":$('#username').val(), "employee_password":$('#password').val()},
+							dataType: 'json',
+							success: function(result){
+								if(result.isSuccess){
+									$.cookie('tokenID', result.token);
+									location.href='index.html';
+								}
+								else{
+									$('#errormsg').html("用户名或密码错误");
+									slider.init();
+								}
+							},
+							error: function() {
+								$('#errormsg').html("登录失败");
+								slider.init();
+							}
+						});
+						$.cookie("baseURL", baseURL);
+						if ($("#ck_rmbUser").prop("checked")) {
+							var str_username = $("#username").val();
+							var str_password = $("#password").val();
+							$.cookie("rmbUser","true", { expires: 7 });
+							$.cookie("username", str_username, { expires: 7 });
+							$.cookie("password", str_password, { expires: 7 });
+						}
+						else {
+							$.cookie("rmbUser","false", { expire: -1 });
+							$.cookie("username","", { expires: -1 });
+							$.cookie("password","", { expires: -1 });
+						}
+					}
+					else
+						slider.init();
+				});
+			slider.init();
+		});
+		
+		var checkUsername = function(){
+			var val = $('#username').val();
+			if (val.length > 20 || val.length < 3 || isNaN(val)){
+				$('#errormsg').html("用户名为长度3-20的数字");
+				return false;
+			}
+			else{
+				$('#errormsg').html("");
+				return true;
+			}
+		}
+		
+		var checkPassword = function(){
+			var val = $('#password').val();
+			if (val.length > 16 || val.length < 6 || isNaN(val)){
+				$('#errormsg').html("密码长度为6-12位");
+				return false;
+			}
+			else{
+				$('#errormsg').html("");
+				return true;
+			}
+		}
+		
+		$("#username").blur(checkUsername);
+		$("#password").blur(checkPassword);
+	});
+	
+	</script>
+  </body>
+</html>
